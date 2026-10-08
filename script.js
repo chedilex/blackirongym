@@ -1,358 +1,310 @@
-window.onload = () => {
+/* ============================================================
+   LOADER
+   ============================================================ */
+window.addEventListener("load", () => {
+  const loader = document.getElementById("loader");
+  if (!loader) return;
 
+  setTimeout(() => {
+    loader.style.opacity = "0";
     setTimeout(() => {
-
-        const loader = document.getElementById("loader");
-
-        loader.style.opacity = "0";
-
-        setTimeout(() => {
-
-            loader.style.display = "none";
-
-        }, 600);
-
-    }, 1500);
-
-};
-
-// Counter Animation
-
-const counters = document.querySelectorAll(".counter");
-
-const speed = 60;
-
-const startCounter = () => {
-
-    counters.forEach(counter => {
-
-        const target = +counter.dataset.target;
-
-        const update = () => {
-
-            const value = +counter.innerText;
-
-            const increment = Math.ceil(target / speed);
-
-            if (value < target) {
-
-                counter.innerText = value + increment;
-
-                setTimeout(update, 20);
-
-            } else {
-
-                counter.innerText = target + "+";
-
-            }
-
-        };
-
-        update();
-
-    });
-
-};
-
-const observer = new IntersectionObserver(entries => {
-
-    entries.forEach(entry => {
-
-        if (entry.isIntersecting) {
-
-            startCounter();
-
-            observer.disconnect();
-
-        }
-
-    });
-
+      loader.style.display = "none";
+    }, 600);
+  }, 1200);
 });
 
-observer.observe(document.querySelector(".stats"));
+/* ============================================================
+   COUNTER ANIMATION
+   ============================================================ */
+const counters = document.querySelectorAll(".counter");
+const counterSpeed = 60;
+let counterStarted = false;
 
-/* BMI CALCULATOR */
+function startCounter() {
+  if (counterStarted) return;
+  counterStarted = true;
 
+  counters.forEach((counter) => {
+    const target = +counter.dataset.target || 0;
+    const increment = Math.ceil(target / counterSpeed);
 
-function calculateBMI(){
-
-    let weight = document.getElementById("weight").value;
-
-    let height = document.getElementById("height").value;
-
-
-    if(weight === "" || height === ""){
-
-        document.getElementById("bmi-result").innerHTML =
-        "Please enter your weight and height";
-
-        return;
-
-    }
-
-
-    height = height / 100;
-
-
-    let bmi = weight / (height * height);
-
-
-    let status;
-
-
-    if(bmi < 18.5){
-
-        status = "Underweight";
-
-    }
-
-    else if(bmi < 25){
-
-        status = "Normal Weight";
-
-    }
-
-    else if(bmi < 30){
-
-        status = "Overweight";
-
-    }
-
-    else{
-
-        status = "High BMI";
-
-    }
-
-
-    document.getElementById("bmi-result").innerHTML =
-
-    "Your BMI: " + bmi.toFixed(1) +
-    "<br>" +
-    status;
-
-
+    const update = () => {
+      const value = +counter.innerText.replace("+", "") || 0;
+      if (value < target) {
+        counter.innerText = Math.min(value + increment, target);
+        setTimeout(update, 20);
+      } else {
+        counter.innerText = target + "+";
+      }
+    };
+    update();
+  });
 }
 
-/* GALLERY LIGHTBOX */
+const statsSection = document.querySelector(".stats");
+if (statsSection) {
+  const statsObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          startCounter();
+          statsObserver.disconnect();
+        }
+      });
+    },
+    { threshold: 0.3 },
+  );
+  statsObserver.observe(statsSection);
+}
 
+/* ============================================================
+   BMI CALCULATOR
+   ============================================================ */
+function calculateBMI() {
+  const weight = document.getElementById("weight").value;
+  const height = document.getElementById("height").value;
+  const resultEl = document.getElementById("bmi-result");
 
+  if (!weight || !height || weight <= 0 || height <= 0) {
+    resultEl.innerHTML = "Please enter valid weight and height";
+    return;
+  }
+
+  const h = height / 100;
+  const bmi = weight / (h * h);
+
+  let status;
+  if (bmi < 18.5) status = "Underweight";
+  else if (bmi < 25) status = "Normal Weight";
+  else if (bmi < 30) status = "Overweight";
+  else status = "High BMI";
+
+  resultEl.innerHTML = "Your BMI: " + bmi.toFixed(1) + "<br>" + status;
+}
+
+// Make calculateBMI global (used in HTML onclick)
+window.calculateBMI = calculateBMI;
+
+/* ============================================================
+   GALLERY LIGHTBOX
+   ============================================================ */
 const galleryImages = document.querySelectorAll(".gallery-item img");
-
 const lightbox = document.getElementById("lightbox");
-
 const lightboxImg = document.getElementById("lightbox-img");
-
 const closeLightbox = document.querySelector(".close");
 
-
-galleryImages.forEach(image => {
-
-
-    image.onclick = () => {
-
-        lightbox.style.display = "flex";
-
-        lightboxImg.src = image.src;
-
-    };
-
-
+galleryImages.forEach((image) => {
+  image.addEventListener("click", () => {
+    lightbox.style.display = "flex";
+    lightboxImg.src = image.src;
+    document.body.style.overflow = "hidden";
+  });
 });
 
-
-closeLightbox.onclick = () => {
-
-    lightbox.style.display = "none";
-
-};
-
-
-
-lightbox.onclick = (e)=>{
-
-    if(e.target === lightbox){
-
-        lightbox.style.display="none";
-
-    }
-
-};
-
-/* TESTIMONIAL SLIDER */
-
-
-const testimonials = document.querySelectorAll(".testimonial");
-
-const nextBtn = document.getElementById("next");
-
-const prevBtn = document.getElementById("prev");
-
-
-let current = 0;
-
-
-
-function showTestimonial(index){
-
-    testimonials.forEach(item=>{
-
-        item.classList.remove("active");
-
-    });
-
-
-    testimonials[index].classList.add("active");
-
+function closeLB() {
+  lightbox.style.display = "none";
+  document.body.style.overflow = "";
 }
 
+if (closeLightbox) closeLightbox.addEventListener("click", closeLB);
 
+if (lightbox) {
+  lightbox.addEventListener("click", (e) => {
+    if (e.target === lightbox) closeLB();
+  });
+}
 
-nextBtn.onclick = ()=>{
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && lightbox && lightbox.style.display === "flex") {
+    closeLB();
+  }
+});
 
-    current++;
+/* ============================================================
+   TESTIMONIAL SLIDER
+   ============================================================ */
+const testimonials = document.querySelectorAll(".testimonial");
+const nextBtn = document.getElementById("next");
+const prevBtn = document.getElementById("prev");
+let currentTestimonial = 0;
+let testimonialInterval = null;
 
-    if(current >= testimonials.length){
+function showTestimonial(index) {
+  testimonials.forEach((item) => item.classList.remove("active"));
+  if (testimonials[index]) testimonials[index].classList.add("active");
+}
 
-        current = 0;
+function nextTestimonial() {
+  currentTestimonial = (currentTestimonial + 1) % testimonials.length;
+  showTestimonial(currentTestimonial);
+}
 
-    }
+function prevTestimonial() {
+  currentTestimonial =
+    (currentTestimonial - 1 + testimonials.length) % testimonials.length;
+  showTestimonial(currentTestimonial);
+}
 
-    showTestimonial(current);
+if (nextBtn) {
+  nextBtn.addEventListener("click", () => {
+    nextTestimonial();
+    resetTestimonialInterval();
+  });
+}
 
-};
+if (prevBtn) {
+  prevBtn.addEventListener("click", () => {
+    prevTestimonial();
+    resetTestimonialInterval();
+  });
+}
 
+function startTestimonialInterval() {
+  if (testimonials.length > 1) {
+    testimonialInterval = setInterval(nextTestimonial, 5000);
+  }
+}
 
+function resetTestimonialInterval() {
+  clearInterval(testimonialInterval);
+  startTestimonialInterval();
+}
 
-prevBtn.onclick = ()=>{
+if (testimonials.length > 1) {
+  startTestimonialInterval();
+}
 
-    current--;
-
-    if(current < 0){
-
-        current = testimonials.length-1;
-
-    }
-
-    showTestimonial(current);
-
-};
-
-
-
-setInterval(()=>{
-
-    current++;
-
-    if(current >= testimonials.length){
-
-        current=0;
-
-    }
-
-    showTestimonial(current);
-
-
-},5000);
-
-/* MOBILE MENU */
-
-
+/* ============================================================
+   MOBILE MENU
+   ============================================================ */
 const menuBtn = document.querySelector(".menu-btn");
+const navLinks = document.querySelector(".nav-links");
 
-const nav = document.querySelector(".nav-links");
+if (menuBtn && navLinks) {
+  menuBtn.addEventListener("click", () => {
+    navLinks.classList.toggle("open");
+    const icon = menuBtn.querySelector("i");
+    if (icon) {
+      icon.classList.toggle("fa-bars");
+      icon.classList.toggle("fa-xmark");
+    }
+  });
 
+  // Close menu on link click
+  navLinks.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      navLinks.classList.remove("open");
+      const icon = menuBtn.querySelector("i");
+      if (icon) {
+        icon.classList.add("fa-bars");
+        icon.classList.remove("fa-xmark");
+      }
+    });
+  });
 
-menuBtn.onclick = ()=>{
+  // Close menu on outside click
+  document.addEventListener("click", (e) => {
+    if (
+      navLinks.classList.contains("open") &&
+      !navLinks.contains(e.target) &&
+      !menuBtn.contains(e.target)
+    ) {
+      navLinks.classList.remove("open");
+      const icon = menuBtn.querySelector("i");
+      if (icon) {
+        icon.classList.add("fa-bars");
+        icon.classList.remove("fa-xmark");
+      }
+    }
+  });
+}
 
-nav.classList.toggle("open");
-
-};
-
-
-
-/* BACK TO TOP */
-
-
+/* ============================================================
+   BACK TO TOP
+   ============================================================ */
 const topBtn = document.getElementById("topBtn");
 
+if (topBtn) {
+  window.addEventListener(
+    "scroll",
+    () => {
+      topBtn.style.display = window.scrollY > 400 ? "flex" : "none";
+    },
+    { passive: true },
+  );
 
-window.addEventListener("scroll",()=>{
-
-
-    if(window.scrollY > 500){
-
-        topBtn.style.display="block";
-
-    }
-
-    else{
-
-        topBtn.style.display="none";
-
-    }
-
-
-});
-
-
-topBtn.onclick = ()=>{
-
-window.scrollTo({
-
-top:0,
-
-behavior:"smooth"
-
-});
-
-};
-
-
-
-/* SCROLL REVEAL */
-
-
-const revealElements =
-document.querySelectorAll(
-".about, .program-card, .trainer-card, .price-card, .bmi-box, .gallery-item, .testimonial, .contact-container"
-);
-
-
-
-const revealObserver =
-new IntersectionObserver((entries)=>{
-
-
-entries.forEach(entry=>{
-
-
-if(entry.isIntersecting){
-
-entry.target.classList.add("reveal");
-
-setTimeout(()=>{
-
-entry.target.classList.add("show");
-
-},100);
-
-
+  topBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 }
 
+/* ============================================================
+   SCROLL REVEAL
+   ============================================================ */
+const revealElements = document.querySelectorAll(
+  ".about, .program-card, .trainer-card, .price-card, .bmi-box, .gallery-item, .testimonial, .contact-container, .stat-box",
+);
 
+if ("IntersectionObserver" in window) {
+  const revealObserver = new IntersectionObserver(
+    (entries, obs) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("reveal");
+          setTimeout(() => entry.target.classList.add("show"), 80);
+          obs.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.15, rootMargin: "0px 0px -50px 0px" },
+  );
+
+  revealElements.forEach((el) => {
+    el.classList.add("reveal");
+    revealObserver.observe(el);
+  });
+} else {
+  revealElements.forEach((el) => el.classList.add("show"));
+}
+
+/* ============================================================
+   HANDLE RESIZE — close mobile menu when resizing to desktop
+   ============================================================ */
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (window.innerWidth > 900 && navLinks) {
+      navLinks.classList.remove("open");
+      const icon = menuBtn?.querySelector("i");
+      if (icon) {
+        icon.classList.add("fa-bars");
+        icon.classList.remove("fa-xmark");
+      }
+    }
+  }, 150);
 });
 
+/* ============================================================
+   SMOOTH SCROLL FOR ANCHOR LINKS
+   ============================================================ */
+document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+  anchor.addEventListener("click", function (e) {
+    const targetId = this.getAttribute("href");
+    if (targetId === "#" || targetId.length < 2) return;
 
-});
+    const target = document.querySelector(targetId);
+    if (target) {
+      e.preventDefault();
+      const headerOffset = 80;
+      const elementPosition = target.getBoundingClientRect().top;
+      const offsetPosition =
+        elementPosition + window.pageYOffset - headerOffset;
 
-
-
-revealElements.forEach(el=>{
-
-el.classList.add("reveal");
-
-revealObserver.observe(el);
-
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
+    }
+  });
 });
