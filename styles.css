@@ -64,6 +64,17 @@ body {
   text-align: center;
   padding: 0 20px;
 }
+/* ============================================================
+    Footer
+  ============================================================ */
+
+.chedilex-footer-content {
+  font-size: 0.7rem !important;
+}
+
+.chedilex-footer-content img {
+  height: 35px !important;
+}
 
 /* ============================================================
    HEADER / NAVIGATION
